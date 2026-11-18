@@ -1,0 +1,41 @@
+fragment ProjectToken on ProjectToken {
+  id
+  name
+  projectId
+  environmentId
+}
+
+mutation createProjectToken($input: ProjectTokenCreateInput!) {
+  projectTokenCreate(input: $input)
+}
+
+query identifyProjectToken {
+  projectToken {
+    ...ProjectToken
+  }
+}
+
+# @genqlient(for: "Query.projectTokens", pointer: true)
+# @genqlient(for: "QueryProjectTokensConnection.pageInfo", pointer: true)
+# @genqlient(for: "PageInfo.endCursor", pointer: true)
+query getProjectTokens(
+  $projectId: String!
+  # @genqlient(pointer: true)
+  $after: String
+) {
+  projectTokens(projectId: $projectId, after: $after, first: 50) {
+    edges {
+      node {
+        ...ProjectToken
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+mutation deleteProjectToken($id: String!) {
+  projectTokenDelete(id: $id)
+}

@@ -285,6 +285,41 @@ func (v *ProjectEnvironmentsProjectEnvironmentsConnectionEdgesProjectEnvironment
 	return v.CreatedAt
 }
 
+// ProjectToken includes the GraphQL fields of ProjectToken requested by the fragment ProjectToken.
+type ProjectToken struct {
+	Id            string `json:"id"`
+	Name          string `json:"name"`
+	ProjectId     string `json:"projectId"`
+	EnvironmentId string `json:"environmentId"`
+}
+
+// GetId returns ProjectToken.Id, and is useful for accessing the field via an interface.
+func (v *ProjectToken) GetId() string { return v.Id }
+
+// GetName returns ProjectToken.Name, and is useful for accessing the field via an interface.
+func (v *ProjectToken) GetName() string { return v.Name }
+
+// GetProjectId returns ProjectToken.ProjectId, and is useful for accessing the field via an interface.
+func (v *ProjectToken) GetProjectId() string { return v.ProjectId }
+
+// GetEnvironmentId returns ProjectToken.EnvironmentId, and is useful for accessing the field via an interface.
+func (v *ProjectToken) GetEnvironmentId() string { return v.EnvironmentId }
+
+type ProjectTokenCreateInput struct {
+	EnvironmentId string `json:"environmentId"`
+	Name          string `json:"name"`
+	ProjectId     string `json:"projectId"`
+}
+
+// GetEnvironmentId returns ProjectTokenCreateInput.EnvironmentId, and is useful for accessing the field via an interface.
+func (v *ProjectTokenCreateInput) GetEnvironmentId() string { return v.EnvironmentId }
+
+// GetName returns ProjectTokenCreateInput.Name, and is useful for accessing the field via an interface.
+func (v *ProjectTokenCreateInput) GetName() string { return v.Name }
+
+// GetProjectId returns ProjectTokenCreateInput.ProjectId, and is useful for accessing the field via an interface.
+func (v *ProjectTokenCreateInput) GetProjectId() string { return v.ProjectId }
+
 type ProjectUpdateInput struct {
 	BaseEnvironmentId *string `json:"baseEnvironmentId,omitempty"`
 	// Enable/disable pull request environments for PRs created by bots
@@ -944,6 +979,14 @@ type __createProjectInput struct {
 // GetInput returns __createProjectInput.Input, and is useful for accessing the field via an interface.
 func (v *__createProjectInput) GetInput() ProjectCreateInput { return v.Input }
 
+// __createProjectTokenInput is used internally by genqlient
+type __createProjectTokenInput struct {
+	Input ProjectTokenCreateInput `json:"input"`
+}
+
+// GetInput returns __createProjectTokenInput.Input, and is useful for accessing the field via an interface.
+func (v *__createProjectTokenInput) GetInput() ProjectTokenCreateInput { return v.Input }
+
 // __createServiceDomainInput is used internally by genqlient
 type __createServiceDomainInput struct {
 	Input ServiceDomainCreateInput `json:"input"`
@@ -999,6 +1042,14 @@ type __deleteProjectInput struct {
 
 // GetId returns __deleteProjectInput.Id, and is useful for accessing the field via an interface.
 func (v *__deleteProjectInput) GetId() string { return v.Id }
+
+// __deleteProjectTokenInput is used internally by genqlient
+type __deleteProjectTokenInput struct {
+	Id string `json:"id"`
+}
+
+// GetId returns __deleteProjectTokenInput.Id, and is useful for accessing the field via an interface.
+func (v *__deleteProjectTokenInput) GetId() string { return v.Id }
 
 // __deleteServiceDomainInput is used internally by genqlient
 type __deleteServiceDomainInput struct {
@@ -1071,6 +1122,18 @@ type __getProjectInput struct {
 
 // GetId returns __getProjectInput.Id, and is useful for accessing the field via an interface.
 func (v *__getProjectInput) GetId() string { return v.Id }
+
+// __getProjectTokensInput is used internally by genqlient
+type __getProjectTokensInput struct {
+	ProjectId string  `json:"projectId"`
+	After     *string `json:"after"`
+}
+
+// GetProjectId returns __getProjectTokensInput.ProjectId, and is useful for accessing the field via an interface.
+func (v *__getProjectTokensInput) GetProjectId() string { return v.ProjectId }
+
+// GetAfter returns __getProjectTokensInput.After, and is useful for accessing the field via an interface.
+func (v *__getProjectTokensInput) GetAfter() *string { return v.After }
 
 // __getServiceInput is used internally by genqlient
 type __getServiceInput struct {
@@ -1666,6 +1729,15 @@ func (v *createProjectResponse) GetProjectCreate() createProjectProjectCreatePro
 	return v.ProjectCreate
 }
 
+// createProjectTokenResponse is returned by createProjectToken on success.
+type createProjectTokenResponse struct {
+	// Create a token for a project that has access to a specific environment
+	ProjectTokenCreate string `json:"projectTokenCreate"`
+}
+
+// GetProjectTokenCreate returns createProjectTokenResponse.ProjectTokenCreate, and is useful for accessing the field via an interface.
+func (v *createProjectTokenResponse) GetProjectTokenCreate() string { return v.ProjectTokenCreate }
+
 // createServiceDomainResponse is returned by createServiceDomain on success.
 type createServiceDomainResponse struct {
 	// Creates a new service domain.
@@ -2047,6 +2119,15 @@ type deleteProjectResponse struct {
 // GetProjectDelete returns deleteProjectResponse.ProjectDelete, and is useful for accessing the field via an interface.
 func (v *deleteProjectResponse) GetProjectDelete() bool { return v.ProjectDelete }
 
+// deleteProjectTokenResponse is returned by deleteProjectToken on success.
+type deleteProjectTokenResponse struct {
+	// Delete a project token
+	ProjectTokenDelete bool `json:"projectTokenDelete"`
+}
+
+// GetProjectTokenDelete returns deleteProjectTokenResponse.ProjectTokenDelete, and is useful for accessing the field via an interface.
+func (v *deleteProjectTokenResponse) GetProjectTokenDelete() bool { return v.ProjectTokenDelete }
+
 // deleteServiceDomainResponse is returned by deleteServiceDomain on success.
 type deleteServiceDomainResponse struct {
 	// Deletes a service domain.
@@ -2383,6 +2464,137 @@ type getProjectResponse struct {
 
 // GetProject returns getProjectResponse.Project, and is useful for accessing the field via an interface.
 func (v *getProjectResponse) GetProject() getProjectProject { return v.Project }
+
+// getProjectTokensProjectTokensQueryProjectTokensConnection includes the requested fields of the GraphQL type QueryProjectTokensConnection.
+type getProjectTokensProjectTokensQueryProjectTokensConnection struct {
+	Edges    []getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdge `json:"edges"`
+	PageInfo *getProjectTokensProjectTokensQueryProjectTokensConnectionPageInfo                               `json:"pageInfo"`
+}
+
+// GetEdges returns getProjectTokensProjectTokensQueryProjectTokensConnection.Edges, and is useful for accessing the field via an interface.
+func (v *getProjectTokensProjectTokensQueryProjectTokensConnection) GetEdges() []getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdge {
+	return v.Edges
+}
+
+// GetPageInfo returns getProjectTokensProjectTokensQueryProjectTokensConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *getProjectTokensProjectTokensQueryProjectTokensConnection) GetPageInfo() *getProjectTokensProjectTokensQueryProjectTokensConnectionPageInfo {
+	return v.PageInfo
+}
+
+// getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdge includes the requested fields of the GraphQL type QueryProjectTokensConnectionEdge.
+type getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdge struct {
+	Node getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken `json:"node"`
+}
+
+// GetNode returns getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdge.Node, and is useful for accessing the field via an interface.
+func (v *getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdge) GetNode() getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken {
+	return v.Node
+}
+
+// getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken includes the requested fields of the GraphQL type ProjectToken.
+type getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken struct {
+	ProjectToken `json:"-"`
+}
+
+// GetId returns getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken.Id, and is useful for accessing the field via an interface.
+func (v *getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken) GetId() string {
+	return v.ProjectToken.Id
+}
+
+// GetName returns getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken.Name, and is useful for accessing the field via an interface.
+func (v *getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken) GetName() string {
+	return v.ProjectToken.Name
+}
+
+// GetProjectId returns getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken.ProjectId, and is useful for accessing the field via an interface.
+func (v *getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken) GetProjectId() string {
+	return v.ProjectToken.ProjectId
+}
+
+// GetEnvironmentId returns getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken.EnvironmentId, and is useful for accessing the field via an interface.
+func (v *getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken) GetEnvironmentId() string {
+	return v.ProjectToken.EnvironmentId
+}
+
+func (v *getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.ProjectToken)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalgetProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken struct {
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	ProjectId string `json:"projectId"`
+
+	EnvironmentId string `json:"environmentId"`
+}
+
+func (v *getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *getProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken) __premarshalJSON() (*__premarshalgetProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken, error) {
+	var retval __premarshalgetProjectTokensProjectTokensQueryProjectTokensConnectionEdgesQueryProjectTokensConnectionEdgeNodeProjectToken
+
+	retval.Id = v.ProjectToken.Id
+	retval.Name = v.ProjectToken.Name
+	retval.ProjectId = v.ProjectToken.ProjectId
+	retval.EnvironmentId = v.ProjectToken.EnvironmentId
+	return &retval, nil
+}
+
+// getProjectTokensProjectTokensQueryProjectTokensConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+type getProjectTokensProjectTokensQueryProjectTokensConnectionPageInfo struct {
+	HasNextPage bool    `json:"hasNextPage"`
+	EndCursor   *string `json:"endCursor"`
+}
+
+// GetHasNextPage returns getProjectTokensProjectTokensQueryProjectTokensConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *getProjectTokensProjectTokensQueryProjectTokensConnectionPageInfo) GetHasNextPage() bool {
+	return v.HasNextPage
+}
+
+// GetEndCursor returns getProjectTokensProjectTokensQueryProjectTokensConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *getProjectTokensProjectTokensQueryProjectTokensConnectionPageInfo) GetEndCursor() *string {
+	return v.EndCursor
+}
+
+// getProjectTokensResponse is returned by getProjectTokens on success.
+type getProjectTokensResponse struct {
+	// Get all project tokens for a project
+	ProjectTokens *getProjectTokensProjectTokensQueryProjectTokensConnection `json:"projectTokens"`
+}
+
+// GetProjectTokens returns getProjectTokensResponse.ProjectTokens, and is useful for accessing the field via an interface.
+func (v *getProjectTokensResponse) GetProjectTokens() *getProjectTokensProjectTokensQueryProjectTokensConnection {
+	return v.ProjectTokens
+}
 
 // getServiceInstanceResponse is returned by getServiceInstance on success.
 type getServiceInstanceResponse struct {
@@ -2845,6 +3057,89 @@ type getVolumeInstancesResponse struct {
 
 // GetProject returns getVolumeInstancesResponse.Project, and is useful for accessing the field via an interface.
 func (v *getVolumeInstancesResponse) GetProject() getVolumeInstancesProject { return v.Project }
+
+// identifyProjectTokenProjectToken includes the requested fields of the GraphQL type ProjectToken.
+type identifyProjectTokenProjectToken struct {
+	ProjectToken `json:"-"`
+}
+
+// GetId returns identifyProjectTokenProjectToken.Id, and is useful for accessing the field via an interface.
+func (v *identifyProjectTokenProjectToken) GetId() string { return v.ProjectToken.Id }
+
+// GetName returns identifyProjectTokenProjectToken.Name, and is useful for accessing the field via an interface.
+func (v *identifyProjectTokenProjectToken) GetName() string { return v.ProjectToken.Name }
+
+// GetProjectId returns identifyProjectTokenProjectToken.ProjectId, and is useful for accessing the field via an interface.
+func (v *identifyProjectTokenProjectToken) GetProjectId() string { return v.ProjectToken.ProjectId }
+
+// GetEnvironmentId returns identifyProjectTokenProjectToken.EnvironmentId, and is useful for accessing the field via an interface.
+func (v *identifyProjectTokenProjectToken) GetEnvironmentId() string {
+	return v.ProjectToken.EnvironmentId
+}
+
+func (v *identifyProjectTokenProjectToken) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*identifyProjectTokenProjectToken
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.identifyProjectTokenProjectToken = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.ProjectToken)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalidentifyProjectTokenProjectToken struct {
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	ProjectId string `json:"projectId"`
+
+	EnvironmentId string `json:"environmentId"`
+}
+
+func (v *identifyProjectTokenProjectToken) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *identifyProjectTokenProjectToken) __premarshalJSON() (*__premarshalidentifyProjectTokenProjectToken, error) {
+	var retval __premarshalidentifyProjectTokenProjectToken
+
+	retval.Id = v.ProjectToken.Id
+	retval.Name = v.ProjectToken.Name
+	retval.ProjectId = v.ProjectToken.ProjectId
+	retval.EnvironmentId = v.ProjectToken.EnvironmentId
+	return &retval, nil
+}
+
+// identifyProjectTokenResponse is returned by identifyProjectToken on success.
+type identifyProjectTokenResponse struct {
+	// Get a single project token by the value in the header
+	ProjectToken identifyProjectTokenProjectToken `json:"projectToken"`
+}
+
+// GetProjectToken returns identifyProjectTokenResponse.ProjectToken, and is useful for accessing the field via an interface.
+func (v *identifyProjectTokenResponse) GetProjectToken() identifyProjectTokenProjectToken {
+	return v.ProjectToken
+}
 
 // listCustomDomainsDomainsAllDomains includes the requested fields of the GraphQL type AllDomains.
 type listCustomDomainsDomainsAllDomains struct {
@@ -3620,6 +3915,36 @@ fragment Project on Project {
 	return &data, err
 }
 
+func createProjectToken(
+	ctx context.Context,
+	client graphql.Client,
+	input ProjectTokenCreateInput,
+) (*createProjectTokenResponse, error) {
+	req := &graphql.Request{
+		OpName: "createProjectToken",
+		Query: `
+mutation createProjectToken ($input: ProjectTokenCreateInput!) {
+	projectTokenCreate(input: $input)
+}
+`,
+		Variables: &__createProjectTokenInput{
+			Input: input,
+		},
+	}
+	var err error
+
+	var data createProjectTokenResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
 func createService(
 	ctx context.Context,
 	client graphql.Client,
@@ -3863,6 +4188,36 @@ mutation deleteProject ($id: String!) {
 	var err error
 
 	var data deleteProjectResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+func deleteProjectToken(
+	ctx context.Context,
+	client graphql.Client,
+	id string,
+) (*deleteProjectTokenResponse, error) {
+	req := &graphql.Request{
+		OpName: "deleteProjectToken",
+		Query: `
+mutation deleteProjectToken ($id: String!) {
+	projectTokenDelete(id: $id)
+}
+`,
+		Variables: &__deleteProjectTokenInput{
+			Id: id,
+		},
+	}
+	var err error
+
+	var data deleteProjectTokenResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(
@@ -4185,6 +4540,54 @@ fragment Project on Project {
 	return &data, err
 }
 
+func getProjectTokens(
+	ctx context.Context,
+	client graphql.Client,
+	projectId string,
+	after *string,
+) (*getProjectTokensResponse, error) {
+	req := &graphql.Request{
+		OpName: "getProjectTokens",
+		Query: `
+query getProjectTokens ($projectId: String!, $after: String) {
+	projectTokens(projectId: $projectId, after: $after, first: 50) {
+		edges {
+			node {
+				... ProjectToken
+			}
+		}
+		pageInfo {
+			hasNextPage
+			endCursor
+		}
+	}
+}
+fragment ProjectToken on ProjectToken {
+	id
+	name
+	projectId
+	environmentId
+}
+`,
+		Variables: &__getProjectTokensInput{
+			ProjectId: projectId,
+			After:     after,
+		},
+	}
+	var err error
+
+	var data getProjectTokensResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
 func getService(
 	ctx context.Context,
 	client graphql.Client,
@@ -4465,6 +4868,40 @@ fragment Volume on Volume {
 	var err error
 
 	var data getVolumeInstancesResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+func identifyProjectToken(
+	ctx context.Context,
+	client graphql.Client,
+) (*identifyProjectTokenResponse, error) {
+	req := &graphql.Request{
+		OpName: "identifyProjectToken",
+		Query: `
+query identifyProjectToken {
+	projectToken {
+		... ProjectToken
+	}
+}
+fragment ProjectToken on ProjectToken {
+	id
+	name
+	projectId
+	environmentId
+}
+`,
+	}
+	var err error
+
+	var data identifyProjectTokenResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(

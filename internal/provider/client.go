@@ -8,15 +8,29 @@ import (
 	"os"
 )
 
+// Token operations may return credentials in the body, even on error.
+type projectTokenRequestKey struct{}
+
 type authedTransport struct {
-	token   string
-	wrapped http.RoundTripper
+	token        string
+	projectToken bool
+	wrapped      http.RoundTripper
 }
 
 func (t *authedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("Authorization", "Bearer "+t.token)
+	sensitive := t.projectToken || req.Context().Value(projectTokenRequestKey{}) != nil
+	if sensitive && req.Response != nil {
+		return nil, fmt.Errorf("unexpected redirect from Railway token API")
+	}
 
-	debug := os.Getenv("HTTP_DEBUG") == "1"
+	req = req.Clone(req.Context())
+	if t.projectToken {
+		req.Header.Set("Project-Access-Token", t.token)
+	} else {
+		req.Header.Set("Authorization", "Bearer "+t.token)
+	}
+
+	debug := os.Getenv("HTTP_DEBUG") == "1" && !sensitive
 
 	if debug {
 		dump, err := httputil.DumpRequestOut(req, true)
