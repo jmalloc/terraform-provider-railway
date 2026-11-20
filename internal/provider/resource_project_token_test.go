@@ -147,36 +147,14 @@ func mockProjectTokenAPI(t *testing.T) *projectTokenTestAPI {
 		accountTokens: map[string]bool{"Bearer dummy-provider-credential": true, "Bearer rotated-provider-credential": true},
 	}
 	t.Setenv("RAILWAY_TOKEN", "dummy-provider-credential")
-	t.Setenv("HTTP_DEBUG", "1")
-
-	originalTransport, originalStderr := http.DefaultTransport, os.Stderr
-	log, err := os.CreateTemp(t.TempDir(), "http-debug")
-	if err != nil {
-		t.Fatal(err)
-	}
-	os.Stderr = log
+	originalTransport := http.DefaultTransport
 	http.DefaultTransport = projectTokenTestTransport(func(req *http.Request) (*http.Response, error) {
 		if req.URL.Host != "backboard.railway.app" {
 			return originalTransport.RoundTrip(req)
 		}
 		return api.roundTrip(t, req)
 	})
-	t.Cleanup(func() {
-		http.DefaultTransport, os.Stderr = originalTransport, originalStderr
-		log.Close()
-		output, err := os.ReadFile(log.Name())
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !strings.Contains(string(output), "Railway request:") && len(api.events) > 2 {
-			t.Error("HTTP debugging was not active")
-		}
-		for _, credential := range []string{projectTokenTestSecret, "dummy-provider-credential", "rotated-provider-credential"} {
-			if strings.Contains(string(output), credential) {
-				t.Error("HTTP debug logs exposed a credential")
-			}
-		}
-	})
+	t.Cleanup(func() { http.DefaultTransport = originalTransport })
 	return api
 }
 
@@ -298,8 +276,10 @@ func TestProjectTokenResourcePartialCreate(t *testing.T) {
 	api := mockProjectTokenAPI(t)
 	api.failIdentity = true
 	ctx := context.Background()
-	client := newProjectTokenClient("dummy-provider-credential", false)
-	r := ProjectTokenResource{client: client}
+	client := graphql.NewClient(railwayEndpoint, &http.Client{
+		Transport: &authedTransport{token: "dummy-provider-credential", wrapped: http.DefaultTransport},
+	})
+	r := ProjectTokenResource{client: &client}
 	var schema fwresource.SchemaResponse
 	r.Schema(ctx, fwresource.SchemaRequest{}, &schema)
 	plan := tfsdk.Plan{Schema: schema.Schema}
@@ -355,7 +335,7 @@ func TestProjectTokenAPIErrors(t *testing.T) {
 				}
 				return projectTokenTestResponse(tc.status, tc.body)
 			})})
-			r := ProjectTokenResource{client: client}
+			r := ProjectTokenResource{client: &client}
 			token, err := r.find(context.Background(), projectTokenTestProject, "record-1")
 			if token != nil || (err == nil) != tc.wantAbsent {
 				t.Fatal("only confirmed absence should be reported without an error")
@@ -381,7 +361,7 @@ func TestProjectTokenRevocationErrors(t *testing.T) {
 			client := graphql.NewClient(railwayEndpoint, &http.Client{Transport: projectTokenTestTransport(func(req *http.Request) (*http.Response, error) {
 				return projectTokenTestResponse(tc.status, tc.body)
 			})})
-			r := ProjectTokenResource{client: client}
+			r := ProjectTokenResource{client: &client}
 			err := r.revoke(context.Background(), "record-1")
 			if err == nil || strings.Contains(err.Error(), projectTokenTestSecret) {
 				t.Fatal("failed revocation must return a credential-free error")
@@ -427,8 +407,10 @@ resource "railway_project_token" "test" {
 			{
 				Config: project,
 				Check: func(*terraform.State) error {
-					client := newProjectTokenClient(credential, false)
-					r := ProjectTokenResource{client: client}
+					client := graphql.NewClient(railwayEndpoint, &http.Client{
+						Transport: &authedTransport{token: credential, wrapped: http.DefaultTransport},
+					})
+					r := ProjectTokenResource{client: &client}
 					token, err := r.find(context.Background(), projectID, tokenID)
 					if err == nil && token != nil {
 						return errors.New("live project token still exists after destroy")

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/Khan/genqlient/graphql"
@@ -24,7 +25,7 @@ func NewProjectTokenResource() resource.Resource {
 }
 
 type ProjectTokenResource struct {
-	client graphql.Client
+	client *graphql.Client
 }
 
 type ProjectTokenResourceModel struct {
@@ -96,16 +97,16 @@ func (r *ProjectTokenResource) Configure(ctx context.Context, req resource.Confi
 		return
 	}
 
-	clients, ok := req.ProviderData.(*railwayClients)
+	client, ok := req.ProviderData.(*graphql.Client)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *railwayClients, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *graphql.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 		return
 	}
 
-	r.client = clients.projectTokens
+	r.client = client
 }
 
 func (r *ProjectTokenResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -115,7 +116,7 @@ func (r *ProjectTokenResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	response, err := createProjectToken(ctx, r.client, ProjectTokenCreateInput{
+	response, err := createProjectToken(ctx, *r.client, ProjectTokenCreateInput{
 		Name:          data.Name.ValueString(),
 		ProjectId:     data.ProjectId.ValueString(),
 		EnvironmentId: data.EnvironmentId.ValueString(),
@@ -215,13 +216,32 @@ func (r *ProjectTokenResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 }
 
+type projectTokenHTTPClient struct {
+	client *http.Client
+	token  string
+}
+
+func (c *projectTokenHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.Header.Set("Project-Access-Token", c.token)
+	return c.client.Do(req)
+}
+
 func (data *ProjectTokenResourceModel) resolveID(ctx context.Context) error {
 	credential := data.Token.ValueString()
 	if credential == "" {
 		return errors.New("The issued credential is unavailable.")
 	}
 
-	response, err := identifyProjectToken(ctx, newProjectTokenClient(credential, true))
+	client := graphql.NewClient(railwayEndpoint, &projectTokenHTTPClient{
+		token: credential,
+		client: &http.Client{
+			CheckRedirect: func(*http.Request, []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		},
+	})
+	response, err := identifyProjectToken(ctx, client)
 	if err != nil {
 		return errors.New("Railway could not identify the issued credential.")
 	}
@@ -240,7 +260,7 @@ func (r *ProjectTokenResource) find(ctx context.Context, projectID, id string) (
 	seen := map[string]bool{}
 	var after *string
 	for {
-		response, err := getProjectTokens(ctx, r.client, projectID, after)
+		response, err := getProjectTokens(ctx, *r.client, projectID, after)
 		if err != nil {
 			var graphQLErrors gqlerror.List
 			if errors.As(err, &graphQLErrors) && len(graphQLErrors) == 1 && graphQLErrors[0] != nil {
@@ -275,7 +295,7 @@ func (r *ProjectTokenResource) find(ctx context.Context, projectID, id string) (
 var errProjectTokenDeleteUnconfirmed = errors.New("Railway did not confirm token revocation.")
 
 func (r *ProjectTokenResource) revoke(ctx context.Context, id string) error {
-	response, err := deleteProjectToken(ctx, r.client, id)
+	response, err := deleteProjectToken(ctx, *r.client, id)
 	if err != nil {
 		return errors.New("Railway returned an error while revoking the token.")
 	}
