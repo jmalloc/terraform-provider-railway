@@ -6,23 +6,38 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+
+	"github.com/Khan/genqlient/graphql"
 )
 
-// Token operations may return credentials in the body, even on error.
-type projectTokenRequestKey struct{}
+type railwayClients struct {
+	api           graphql.Client
+	projectTokens graphql.Client
+}
+
+// Token operations can return credentials in response bodies. Use a client
+// with HTTP dumps disabled and keep credentials off redirect requests.
+func newProjectTokenClient(token string, projectScoped bool) graphql.Client {
+	return graphql.NewClient(railwayEndpoint, &http.Client{
+		Transport: &authedTransport{
+			token:        token,
+			projectToken: projectScoped,
+			wrapped:      http.DefaultTransport,
+		},
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	})
+}
 
 type authedTransport struct {
 	token        string
 	projectToken bool
+	debugHTTP    bool
 	wrapped      http.RoundTripper
 }
 
 func (t *authedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	sensitive := t.projectToken || req.Context().Value(projectTokenRequestKey{}) != nil
-	if sensitive && req.Response != nil {
-		return nil, fmt.Errorf("unexpected redirect from Railway token API")
-	}
-
 	req = req.Clone(req.Context())
 	if t.projectToken {
 		req.Header.Set("Project-Access-Token", t.token)
@@ -30,7 +45,7 @@ func (t *authedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		req.Header.Set("Authorization", "Bearer "+t.token)
 	}
 
-	debug := os.Getenv("HTTP_DEBUG") == "1" && !sensitive
+	debug := t.debugHTTP && os.Getenv("HTTP_DEBUG") == "1"
 
 	if debug {
 		dump, err := httputil.DumpRequestOut(req, true)

@@ -298,10 +298,8 @@ func TestProjectTokenResourcePartialCreate(t *testing.T) {
 	api := mockProjectTokenAPI(t)
 	api.failIdentity = true
 	ctx := context.Background()
-	client := graphql.NewClient(railwayEndpoint, &http.Client{
-		Transport: &authedTransport{token: "dummy-provider-credential", wrapped: http.DefaultTransport},
-	})
-	r := ProjectTokenResource{client: &client}
+	client := newProjectTokenClient("dummy-provider-credential", false)
+	r := ProjectTokenResource{client: client}
 	var schema fwresource.SchemaResponse
 	r.Schema(ctx, fwresource.SchemaRequest{}, &schema)
 	plan := tfsdk.Plan{Schema: schema.Schema}
@@ -357,7 +355,7 @@ func TestProjectTokenAPIErrors(t *testing.T) {
 				}
 				return projectTokenTestResponse(tc.status, tc.body)
 			})})
-			r := ProjectTokenResource{client: &client}
+			r := ProjectTokenResource{client: client}
 			token, err := r.find(context.Background(), projectTokenTestProject, "record-1")
 			if token != nil || (err == nil) != tc.wantAbsent {
 				t.Fatal("only confirmed absence should be reported without an error")
@@ -383,7 +381,7 @@ func TestProjectTokenRevocationErrors(t *testing.T) {
 			client := graphql.NewClient(railwayEndpoint, &http.Client{Transport: projectTokenTestTransport(func(req *http.Request) (*http.Response, error) {
 				return projectTokenTestResponse(tc.status, tc.body)
 			})})
-			r := ProjectTokenResource{client: &client}
+			r := ProjectTokenResource{client: client}
 			err := r.revoke(context.Background(), "record-1")
 			if err == nil || strings.Contains(err.Error(), projectTokenTestSecret) {
 				t.Fatal("failed revocation must return a credential-free error")
@@ -429,10 +427,9 @@ resource "railway_project_token" "test" {
 			{
 				Config: project,
 				Check: func(*terraform.State) error {
-					client := graphql.NewClient(railwayEndpoint, &http.Client{Transport: &authedTransport{token: credential, wrapped: http.DefaultTransport}})
-					r := ProjectTokenResource{client: &client}
-					ctx := context.WithValue(context.Background(), projectTokenRequestKey{}, true)
-					token, err := r.find(ctx, projectID, tokenID)
+					client := newProjectTokenClient(credential, false)
+					r := ProjectTokenResource{client: client}
+					token, err := r.find(context.Background(), projectID, tokenID)
 					if err == nil && token != nil {
 						return errors.New("live project token still exists after destroy")
 					}

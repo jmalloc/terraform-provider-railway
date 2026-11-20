@@ -84,15 +84,18 @@ func (p *RailwayProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 	httpClient := http.Client{
 		Transport: &authedTransport{
-			token:   token,
-			wrapped: http.DefaultTransport,
+			token:     token,
+			debugHTTP: true,
+			wrapped:   http.DefaultTransport,
 		},
 	}
 
-	client := graphql.NewClient(railwayEndpoint, &httpClient)
-
-	resp.DataSourceData = &client
-	resp.ResourceData = &client
+	clients := &railwayClients{
+		api:           graphql.NewClient(railwayEndpoint, &httpClient),
+		projectTokens: newProjectTokenClient(token, false),
+	}
+	resp.DataSourceData = clients
+	resp.ResourceData = clients
 }
 
 func (p *RailwayProvider) Resources(ctx context.Context) []func() resource.Resource {
