@@ -3,12 +3,12 @@
 page_title: "railway_service Resource - terraform-provider-railway"
 subcategory: ""
 description: |-
-  Railway service.
+  Railway service. Settings are applied to all service instances and read back from the project's default environment. The optional deployment timing and resource limits retain their current values when omitted; set explicit values to manage them. When another system deploys image tags, use lifecycle { ignore_changes = [source_image] } to avoid rolling those deployments back.
 ---
 
 # railway_service (Resource)
 
-Railway service.
+Railway service. Settings are applied to all service instances and read back from the project's default environment. The optional deployment timing and resource limits retain their current values when omitted; set explicit values to manage them. When another system deploys image tags, use `lifecycle { ignore_changes = [source_image] }` to avoid rolling those deployments back.
 
 ## Example Usage
 
@@ -16,6 +16,11 @@ Railway service.
 resource "railway_service" "example" {
   name       = "api"
   project_id = railway_project.example.id
+
+  cpu_limit        = 1
+  memory_limit_gb  = 0.5
+  draining_seconds = 10
+  overlap_seconds  = 0
 }
 ```
 
@@ -31,10 +36,14 @@ resource "railway_service" "example" {
 
 - `build_command` (String) Command to run when building the service. Conflicts with `source_image` and `dockerfile_path`.
 - `config_path` (String) Path to the Railway config file. Conflicts with `source_image`.
+- `cpu_limit` (Number) Maximum number of vCPUs per replica. Applied to all service instances. When omitted, Railway retains its current limit.
 - `cron_schedule` (String) Cron schedule of the service. Only allowed when total number of replicas across all regions is `1`. Conflicts with `restart_policy_type` and `serverless`.
 - `dockerfile_path` (String) Path to a custom Dockerfile. Conflicts with `source_image` and `build_command`.
+- `draining_seconds` (Number) Time in seconds to allow the old deployment to drain after receiving SIGTERM. When omitted, Railway retains its current setting.
 - `healthcheck_path` (String) HTTP path used to check deployment health.
 - `healthcheck_timeout` (Number) Maximum time in seconds to wait for the health check to succeed.
+- `memory_limit_gb` (Number) Maximum memory in decimal gigabytes per replica (1 GB = 1,000,000,000 bytes). Applied to all service instances. When omitted, Railway retains its current limit.
+- `overlap_seconds` (Number) Time in seconds to keep the old deployment running after the new deployment becomes healthy. When omitted, Railway retains its current setting.
 - `predeploy_command` (String) Command to run before deploying the service. Combine multiple commands with `&&`.
 - `predeploy_timeout` (Number) Maximum time in seconds to wait for the predeploy command to succeed.
 - `regions` (Attributes List) Regions with replicas to deploy service in. (see [below for nested schema](#nestedatt--regions))

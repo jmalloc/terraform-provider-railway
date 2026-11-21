@@ -267,6 +267,12 @@ func TestProjectTokenResource(t *testing.T) {
 		"create record-2", "delete record-1", "create record-3", "delete record-2",
 		"create record-4", "delete record-3", "create record-5", "delete record-5", "delete project",
 	}
+	// The token now belongs to a different project, so Terraform can destroy
+	// it and the original project in either order.
+	if len(api.events) == len(want) && api.events[len(want)-1] == "delete record-5" {
+		want[len(want)-2], want[len(want)-1] = want[len(want)-1], want[len(want)-2]
+	}
+
 	if !reflect.DeepEqual(api.events, want) || len(api.tokens) != 0 {
 		t.Fatalf("unexpected token lifecycle: %v", api.events)
 	}

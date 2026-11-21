@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"math"
 	"reflect"
 	"slices"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -73,30 +75,34 @@ type numReplicas struct {
 }
 
 type ServiceResourceModel struct {
-	Id                                 types.String `tfsdk:"id"`
-	Name                               types.String `tfsdk:"name"`
-	ProjectId                          types.String `tfsdk:"project_id"`
-	CronSchedule                       types.String `tfsdk:"cron_schedule"`
-	SourceImage                        types.String `tfsdk:"source_image"`
-	SourceImagePrivateRegistryUsername types.String `tfsdk:"source_image_registry_username"`
-	SourceImagePrivateRegistryPassword types.String `tfsdk:"source_image_registry_password"`
-	SourceRepo                         types.String `tfsdk:"source_repo"`
-	SourceRepoBranch                   types.String `tfsdk:"source_repo_branch"`
-	RootDirectory                      types.String `tfsdk:"root_directory"`
-	ConfigPath                         types.String `tfsdk:"config_path"`
-	BuildCommand                       types.String `tfsdk:"build_command"`
-	DockerfilePath                     types.String `tfsdk:"dockerfile_path"`
-	WatchPatterns                      types.List   `tfsdk:"watch_patterns"`
-	PredeployCommand                   types.String `tfsdk:"predeploy_command"`
-	PredeployTimeout                   types.Int64  `tfsdk:"predeploy_timeout"`
-	StartCommand                       types.String `tfsdk:"start_command"`
-	HealthcheckPath                    types.String `tfsdk:"healthcheck_path"`
-	HealthcheckTimeout                 types.Int64  `tfsdk:"healthcheck_timeout"`
-	RestartPolicyType                  types.String `tfsdk:"restart_policy_type"`
-	RestartPolicyMaxRetries            types.Int64  `tfsdk:"restart_policy_max_retries"`
-	Serverless                         types.Bool   `tfsdk:"serverless"`
-	Volume                             types.Object `tfsdk:"volume"`
-	Regions                            types.List   `tfsdk:"regions"`
+	Id                                 types.String  `tfsdk:"id"`
+	Name                               types.String  `tfsdk:"name"`
+	ProjectId                          types.String  `tfsdk:"project_id"`
+	CronSchedule                       types.String  `tfsdk:"cron_schedule"`
+	SourceImage                        types.String  `tfsdk:"source_image"`
+	SourceImagePrivateRegistryUsername types.String  `tfsdk:"source_image_registry_username"`
+	SourceImagePrivateRegistryPassword types.String  `tfsdk:"source_image_registry_password"`
+	SourceRepo                         types.String  `tfsdk:"source_repo"`
+	SourceRepoBranch                   types.String  `tfsdk:"source_repo_branch"`
+	RootDirectory                      types.String  `tfsdk:"root_directory"`
+	ConfigPath                         types.String  `tfsdk:"config_path"`
+	BuildCommand                       types.String  `tfsdk:"build_command"`
+	DockerfilePath                     types.String  `tfsdk:"dockerfile_path"`
+	WatchPatterns                      types.List    `tfsdk:"watch_patterns"`
+	PredeployCommand                   types.String  `tfsdk:"predeploy_command"`
+	PredeployTimeout                   types.Int64   `tfsdk:"predeploy_timeout"`
+	StartCommand                       types.String  `tfsdk:"start_command"`
+	HealthcheckPath                    types.String  `tfsdk:"healthcheck_path"`
+	HealthcheckTimeout                 types.Int64   `tfsdk:"healthcheck_timeout"`
+	RestartPolicyType                  types.String  `tfsdk:"restart_policy_type"`
+	RestartPolicyMaxRetries            types.Int64   `tfsdk:"restart_policy_max_retries"`
+	DrainingSeconds                    types.Int64   `tfsdk:"draining_seconds"`
+	OverlapSeconds                     types.Int64   `tfsdk:"overlap_seconds"`
+	CPULimit                           types.Float64 `tfsdk:"cpu_limit"`
+	MemoryLimitGB                      types.Float64 `tfsdk:"memory_limit_gb"`
+	Serverless                         types.Bool    `tfsdk:"serverless"`
+	Volume                             types.Object  `tfsdk:"volume"`
+	Regions                            types.List    `tfsdk:"regions"`
 }
 
 func (r *ServiceResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -105,7 +111,7 @@ func (r *ServiceResource) Metadata(ctx context.Context, req resource.MetadataReq
 
 func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Railway service.",
+		MarkdownDescription: "Railway service. Settings are applied to all service instances and read back from the project's default environment. The optional deployment timing and resource limits retain their current values when omitted; set explicit values to manage them. When another system deploys image tags, use `lifecycle { ignore_changes = [source_image] }` to avoid rolling those deployments back.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "Identifier of the service.",
@@ -293,6 +299,30 @@ func (r *ServiceResource) Schema(ctx context.Context, req resource.SchemaRequest
 					int64validator.AtLeast(1),
 				},
 				Default: int64default.StaticInt64(10),
+			},
+			"draining_seconds": schema.Int64Attribute{
+				MarkdownDescription: "Time in seconds to allow the old deployment to drain after receiving SIGTERM. When omitted, Railway retains its current setting.",
+				Optional:            true,
+				Computed:            true,
+				Validators:          []validator.Int64{int64validator.Between(0, 2147483647)},
+			},
+			"overlap_seconds": schema.Int64Attribute{
+				MarkdownDescription: "Time in seconds to keep the old deployment running after the new deployment becomes healthy. When omitted, Railway retains its current setting.",
+				Optional:            true,
+				Computed:            true,
+				Validators:          []validator.Int64{int64validator.Between(0, 2147483647)},
+			},
+			"cpu_limit": schema.Float64Attribute{
+				MarkdownDescription: "Maximum number of vCPUs per replica. Applied to all service instances. When omitted, Railway retains its current limit.",
+				Optional:            true,
+				Computed:            true,
+				Validators:          []validator.Float64{float64validator.AtLeast(math.SmallestNonzeroFloat64)},
+			},
+			"memory_limit_gb": schema.Float64Attribute{
+				MarkdownDescription: "Maximum memory in decimal gigabytes per replica (1 GB = 1,000,000,000 bytes). Applied to all service instances. When omitted, Railway retains its current limit.",
+				Optional:            true,
+				Computed:            true,
+				Validators:          []validator.Float64{float64validator.AtLeast(math.SmallestNonzeroFloat64)},
 			},
 			"serverless": schema.BoolAttribute{
 				MarkdownDescription: "Allow the service to sleep when inactive. **Default** `false`. Conflicts with `cron_schedule`.",
@@ -514,6 +544,11 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 
 	tflog.Trace(ctx, "created service settings")
 
+	if err := updateServiceResourceLimits(ctx, *r.client, data); err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create service resource limits: %s", err))
+		return
+	}
+
 	if !data.Volume.IsNull() {
 		resp.Diagnostics.Append(data.Volume.As(ctx, &volumeData, basetypes.ObjectAsOptions{})...)
 
@@ -683,6 +718,13 @@ func (r *ServiceResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	tflog.Trace(ctx, "updated service settings")
+
+	if !data.CPULimit.Equal(state.CPULimit) || !data.MemoryLimitGB.Equal(state.MemoryLimitGB) {
+		if err := updateServiceResourceLimits(ctx, *r.client, data); err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update service resource limits: %s", err))
+			return
+		}
+	}
 
 	// Delete volume if it was removed
 	if data.Volume.IsNull() && !state.Volume.IsNull() {
@@ -915,6 +957,16 @@ func buildServiceInstanceInput(data *ServiceResourceModel, regionsData *[]Servic
 		instanceInput.HealthcheckTimeout = &timeout
 	}
 
+	if !data.DrainingSeconds.IsNull() && !data.DrainingSeconds.IsUnknown() {
+		value := int(data.DrainingSeconds.ValueInt64())
+		instanceInput.DrainingSeconds = &value
+	}
+
+	if !data.OverlapSeconds.IsNull() && !data.OverlapSeconds.IsUnknown() {
+		value := int(data.OverlapSeconds.ValueInt64())
+		instanceInput.OverlapSeconds = &value
+	}
+
 	instanceInput.RestartPolicyType = RestartPolicyType(data.RestartPolicyType.ValueString())
 	instanceInput.RestartPolicyMaxRetries = int(data.RestartPolicyMaxRetries.ValueInt64())
 	instanceInput.SleepApplication = data.Serverless.ValueBool()
@@ -1016,6 +1068,18 @@ func getAndBuildServiceInstance(ctx context.Context, client graphql.Client, proj
 	data.RestartPolicyMaxRetries = types.Int64Value(int64(instance.RestartPolicyMaxRetries))
 
 	data.Serverless = types.BoolValue(instance.SleepApplication)
+	data.DrainingSeconds = types.Int64Null()
+	if instance.DrainingSeconds != nil {
+		data.DrainingSeconds = types.Int64Value(int64(*instance.DrainingSeconds))
+	}
+	data.OverlapSeconds = types.Int64Null()
+	if instance.OverlapSeconds != nil {
+		data.OverlapSeconds = types.Int64Value(int64(*instance.OverlapSeconds))
+	}
+
+	if err := readServiceResourceLimits(ctx, client, environment.Id, serviceId, data); err != nil {
+		return err
+	}
 
 	if response.ServiceInstance.Source != nil {
 		if response.ServiceInstance.Source.Image != nil {

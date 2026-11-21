@@ -36,6 +36,8 @@ mutation updateService(
   }
 }
 
+# @genqlient(for: "ServiceInstance.drainingSeconds", pointer: true)
+# @genqlient(for: "ServiceInstance.overlapSeconds", pointer: true)
 # @genqlient(for: "ServiceInstance.rootDirectory", pointer: true)
 # @genqlient(for: "ServiceInstance.railwayConfigFile", pointer: true)
 # @genqlient(for: "ServiceInstance.cronSchedule", pointer: true)
@@ -72,6 +74,8 @@ query getServiceInstance(
     restartPolicyType
     restartPolicyMaxRetries
     sleepApplication
+    drainingSeconds
+    overlapSeconds
     latestDeployment {
       meta
     }
@@ -226,5 +230,19 @@ query listDeploymentTriggers(
         branch
       }
     }
+  }
+}
+
+# @genqlient(for: "ServiceInstanceLimitsUpdateInput.vCPUs", omitempty: true, pointer: true)
+# @genqlient(for: "ServiceInstanceLimitsUpdateInput.memoryGB", omitempty: true, pointer: true)
+mutation setServiceResourceLimits(
+  $input: ServiceInstanceLimitsUpdateInput!
+) {
+  serviceInstanceLimitsUpdate(input: $input)
+}
+
+query getServiceResourceLimits($environmentId: String!) {
+  environment(id: $environmentId) {
+    config(decryptVariables: false)
   }
 }

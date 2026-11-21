@@ -539,6 +539,27 @@ func (v *ServiceDomainUpdateInput) GetServiceId() string { return v.ServiceId }
 // GetTargetPort returns ServiceDomainUpdateInput.TargetPort, and is useful for accessing the field via an interface.
 func (v *ServiceDomainUpdateInput) GetTargetPort() *int { return v.TargetPort }
 
+type ServiceInstanceLimitsUpdateInput struct {
+	EnvironmentId string `json:"environmentId"`
+	// Amount of memory in GB to allocate to the service instance
+	MemoryGB  *float64 `json:"memoryGB,omitempty"`
+	ServiceId string   `json:"serviceId"`
+	// Number of vCPUs to allocate to the service instance
+	VCPUs *float64 `json:"vCPUs,omitempty"`
+}
+
+// GetEnvironmentId returns ServiceInstanceLimitsUpdateInput.EnvironmentId, and is useful for accessing the field via an interface.
+func (v *ServiceInstanceLimitsUpdateInput) GetEnvironmentId() string { return v.EnvironmentId }
+
+// GetMemoryGB returns ServiceInstanceLimitsUpdateInput.MemoryGB, and is useful for accessing the field via an interface.
+func (v *ServiceInstanceLimitsUpdateInput) GetMemoryGB() *float64 { return v.MemoryGB }
+
+// GetServiceId returns ServiceInstanceLimitsUpdateInput.ServiceId, and is useful for accessing the field via an interface.
+func (v *ServiceInstanceLimitsUpdateInput) GetServiceId() string { return v.ServiceId }
+
+// GetVCPUs returns ServiceInstanceLimitsUpdateInput.VCPUs, and is useful for accessing the field via an interface.
+func (v *ServiceInstanceLimitsUpdateInput) GetVCPUs() *float64 { return v.VCPUs }
+
 type ServiceInstanceUpdateInput struct {
 	// Instrument the service's processes with eBPF (OBI) while its tracing is on.
 	// Reaches running containers within about a minute, no redeploy needed.
@@ -1163,6 +1184,14 @@ type __getServiceInstancesInput struct {
 // GetServiceId returns __getServiceInstancesInput.ServiceId, and is useful for accessing the field via an interface.
 func (v *__getServiceInstancesInput) GetServiceId() string { return v.ServiceId }
 
+// __getServiceResourceLimitsInput is used internally by genqlient
+type __getServiceResourceLimitsInput struct {
+	EnvironmentId string `json:"environmentId"`
+}
+
+// GetEnvironmentId returns __getServiceResourceLimitsInput.EnvironmentId, and is useful for accessing the field via an interface.
+func (v *__getServiceResourceLimitsInput) GetEnvironmentId() string { return v.EnvironmentId }
+
 // __getSharedVariablesInput is used internally by genqlient
 type __getSharedVariablesInput struct {
 	ProjectId     string `json:"projectId"`
@@ -1270,6 +1299,14 @@ func (v *__redeployServiceInstanceInput) GetEnvironmentId() string { return v.En
 
 // GetServiceId returns __redeployServiceInstanceInput.ServiceId, and is useful for accessing the field via an interface.
 func (v *__redeployServiceInstanceInput) GetServiceId() string { return v.ServiceId }
+
+// __setServiceResourceLimitsInput is used internally by genqlient
+type __setServiceResourceLimitsInput struct {
+	Input ServiceInstanceLimitsUpdateInput `json:"input"`
+}
+
+// GetInput returns __setServiceResourceLimitsInput.Input, and is useful for accessing the field via an interface.
+func (v *__setServiceResourceLimitsInput) GetInput() ServiceInstanceLimitsUpdateInput { return v.Input }
 
 // __updateCustomDomainInput is used internally by genqlient
 type __updateCustomDomainInput struct {
@@ -2624,6 +2661,8 @@ type getServiceInstanceServiceInstance struct {
 	RestartPolicyType       RestartPolicyType                                     `json:"restartPolicyType"`
 	RestartPolicyMaxRetries int                                                   `json:"restartPolicyMaxRetries"`
 	SleepApplication        bool                                                  `json:"sleepApplication"`
+	DrainingSeconds         *int                                                  `json:"drainingSeconds"`
+	OverlapSeconds          *int                                                  `json:"overlapSeconds"`
 	// The most recent deployment for this service instance
 	LatestDeployment getServiceInstanceServiceInstanceLatestDeployment `json:"latestDeployment"`
 }
@@ -2684,6 +2723,12 @@ func (v *getServiceInstanceServiceInstance) GetRestartPolicyMaxRetries() int {
 
 // GetSleepApplication returns getServiceInstanceServiceInstance.SleepApplication, and is useful for accessing the field via an interface.
 func (v *getServiceInstanceServiceInstance) GetSleepApplication() bool { return v.SleepApplication }
+
+// GetDrainingSeconds returns getServiceInstanceServiceInstance.DrainingSeconds, and is useful for accessing the field via an interface.
+func (v *getServiceInstanceServiceInstance) GetDrainingSeconds() *int { return v.DrainingSeconds }
+
+// GetOverlapSeconds returns getServiceInstanceServiceInstance.OverlapSeconds, and is useful for accessing the field via an interface.
+func (v *getServiceInstanceServiceInstance) GetOverlapSeconds() *int { return v.OverlapSeconds }
 
 // GetLatestDeployment returns getServiceInstanceServiceInstance.LatestDeployment, and is useful for accessing the field via an interface.
 func (v *getServiceInstanceServiceInstance) GetLatestDeployment() getServiceInstanceServiceInstanceLatestDeployment {
@@ -2765,6 +2810,25 @@ func (v *getServiceInstancesServiceServiceInstancesServiceServiceInstancesConnec
 // GetEnvironmentId returns getServiceInstancesServiceServiceInstancesServiceServiceInstancesConnectionEdgesServiceServiceInstancesConnectionEdgeNodeServiceInstance.EnvironmentId, and is useful for accessing the field via an interface.
 func (v *getServiceInstancesServiceServiceInstancesServiceServiceInstancesConnectionEdgesServiceServiceInstancesConnectionEdgeNodeServiceInstance) GetEnvironmentId() string {
 	return v.EnvironmentId
+}
+
+// getServiceResourceLimitsEnvironment includes the requested fields of the GraphQL type Environment.
+type getServiceResourceLimitsEnvironment struct {
+	Config map[string]interface{} `json:"config"`
+}
+
+// GetConfig returns getServiceResourceLimitsEnvironment.Config, and is useful for accessing the field via an interface.
+func (v *getServiceResourceLimitsEnvironment) GetConfig() map[string]interface{} { return v.Config }
+
+// getServiceResourceLimitsResponse is returned by getServiceResourceLimits on success.
+type getServiceResourceLimitsResponse struct {
+	// Find a single environment
+	Environment getServiceResourceLimitsEnvironment `json:"environment"`
+}
+
+// GetEnvironment returns getServiceResourceLimitsResponse.Environment, and is useful for accessing the field via an interface.
+func (v *getServiceResourceLimitsResponse) GetEnvironment() getServiceResourceLimitsEnvironment {
+	return v.Environment
 }
 
 // getServiceResponse is returned by getService on success.
@@ -3425,6 +3489,17 @@ type redeployServiceInstanceResponse struct {
 // GetServiceInstanceRedeploy returns redeployServiceInstanceResponse.ServiceInstanceRedeploy, and is useful for accessing the field via an interface.
 func (v *redeployServiceInstanceResponse) GetServiceInstanceRedeploy() bool {
 	return v.ServiceInstanceRedeploy
+}
+
+// setServiceResourceLimitsResponse is returned by setServiceResourceLimits on success.
+type setServiceResourceLimitsResponse struct {
+	// Update the resource limits for a service instance
+	ServiceInstanceLimitsUpdate bool `json:"serviceInstanceLimitsUpdate"`
+}
+
+// GetServiceInstanceLimitsUpdate returns setServiceResourceLimitsResponse.ServiceInstanceLimitsUpdate, and is useful for accessing the field via an interface.
+func (v *setServiceResourceLimitsResponse) GetServiceInstanceLimitsUpdate() bool {
+	return v.ServiceInstanceLimitsUpdate
 }
 
 // updateCustomDomainResponse is returned by updateCustomDomain on success.
@@ -4654,6 +4729,8 @@ query getServiceInstance ($environmentId: String!, $serviceId: String!) {
 		restartPolicyType
 		restartPolicyMaxRetries
 		sleepApplication
+		drainingSeconds
+		overlapSeconds
 		latestDeployment {
 			meta
 		}
@@ -4707,6 +4784,38 @@ query getServiceInstances ($serviceId: String!) {
 	var err error
 
 	var data getServiceInstancesResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+func getServiceResourceLimits(
+	ctx context.Context,
+	client graphql.Client,
+	environmentId string,
+) (*getServiceResourceLimitsResponse, error) {
+	req := &graphql.Request{
+		OpName: "getServiceResourceLimits",
+		Query: `
+query getServiceResourceLimits ($environmentId: String!) {
+	environment(id: $environmentId) {
+		config(decryptVariables: false)
+	}
+}
+`,
+		Variables: &__getServiceResourceLimitsInput{
+			EnvironmentId: environmentId,
+		},
+	}
+	var err error
+
+	var data getServiceResourceLimitsResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(
@@ -5075,6 +5184,36 @@ mutation redeployServiceInstance ($environmentId: String!, $serviceId: String!) 
 	var err error
 
 	var data redeployServiceInstanceResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+func setServiceResourceLimits(
+	ctx context.Context,
+	client graphql.Client,
+	input ServiceInstanceLimitsUpdateInput,
+) (*setServiceResourceLimitsResponse, error) {
+	req := &graphql.Request{
+		OpName: "setServiceResourceLimits",
+		Query: `
+mutation setServiceResourceLimits ($input: ServiceInstanceLimitsUpdateInput!) {
+	serviceInstanceLimitsUpdate(input: $input)
+}
+`,
+		Variables: &__setServiceResourceLimitsInput{
+			Input: input,
+		},
+	}
+	var err error
+
+	var data setServiceResourceLimitsResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(
