@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -267,7 +268,14 @@ func TestProjectTokenResource(t *testing.T) {
 		"create record-2", "delete record-1", "create record-3", "delete record-2",
 		"create record-4", "delete record-3", "create record-5", "delete record-5", "delete project",
 	}
-	if !reflect.DeepEqual(api.events, want) || len(api.tokens) != 0 {
+	got := slices.Clone(api.events)
+	if len(got) == len(want) {
+		// After moving the token, its replacement and the original project have
+		// no dependency on each other and may be destroyed in either order.
+		slices.Sort(got[len(got)-2:])
+		slices.Sort(want[len(want)-2:])
+	}
+	if !reflect.DeepEqual(got, want) || len(api.tokens) != 0 {
 		t.Fatalf("unexpected token lifecycle: %v", api.events)
 	}
 }
