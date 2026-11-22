@@ -503,6 +503,22 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 	data.Name = types.StringValue(service.Name)
 	data.ProjectId = types.StringValue(service.ProjectId)
 
+	// Preserve the created service if later steps fail. Planned values may still
+	// be unknown, so only save known values until configuration is complete.
+	partialState := ServiceResourceModel{
+		Id:            data.Id,
+		Name:          data.Name,
+		ProjectId:     data.ProjectId,
+		WatchPatterns: types.ListNull(types.StringType),
+		Regions:       types.ListNull(types.ObjectType{AttrTypes: regionAttrTypes}),
+		Volume:        types.ObjectNull(volumeAttrTypes),
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &partialState)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	instanceInput := buildServiceInstanceInput(data, regionsData)
 
 	_, err = updateServiceInstance(ctx, *r.client, data.Id.ValueString(), instanceInput)
@@ -533,6 +549,19 @@ func (r *ServiceResource) Create(ctx context.Context, req resource.CreateRequest
 		}
 
 		tflog.Trace(ctx, "created a volume")
+
+		// Retain the volume identity even if renaming or connecting the source fails.
+		partialState.Volume = types.ObjectValueMust(volumeAttrTypes, map[string]attr.Value{
+			"id":         types.StringValue(volumeResponse.VolumeCreate.Volume.Id),
+			"name":       types.StringValue(volumeResponse.VolumeCreate.Volume.Name),
+			"mount_path": volumeData.MountPath,
+			"size":       types.Float64Null(),
+		})
+		resp.Diagnostics.Append(resp.State.Set(ctx, &partialState)...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
 		_, err = updateVolume(ctx, *r.client, volumeResponse.VolumeCreate.Volume.Id, VolumeUpdateInput{
 			Name: volumeData.Name.ValueString(),
