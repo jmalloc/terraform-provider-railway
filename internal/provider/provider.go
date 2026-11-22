@@ -15,6 +15,8 @@ import (
 	"github.com/Khan/genqlient/graphql"
 )
 
+const railwayEndpoint = "https://backboard.railway.app/graphql/v2?source=terraform_provider_railway"
+
 var (
 	envVarName          = "RAILWAY_TOKEN"
 	errMissingAuthToken = "Required token could not be found. Please set the token using an input variable in the provider configuration block or by using the `" + envVarName + "` environment variable."
@@ -87,7 +89,7 @@ func (p *RailwayProvider) Configure(ctx context.Context, req provider.ConfigureR
 		},
 	}
 
-	client := graphql.NewClient("https://backboard.railway.app/graphql/v2?source=terraform_provider_railway", &httpClient)
+	client := graphql.NewClient(railwayEndpoint, &httpClient)
 
 	resp.DataSourceData = &client
 	resp.ResourceData = &client
@@ -96,6 +98,7 @@ func (p *RailwayProvider) Configure(ctx context.Context, req provider.ConfigureR
 func (p *RailwayProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewProjectResource,
+		NewProjectTokenResource,
 		NewEnvironmentResource,
 		NewServiceResource,
 		NewVariableResource,
